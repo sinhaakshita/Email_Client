@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# AI Mail — Intelligent Email Client
 
-## Getting Started
+A modern AI-powered email client built with Next.js and React.
 
-First, run the development server:
+The application combines a clean email management interface with AI-assisted workflows such as email summarization and automatic reply generation.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+This project was developed as an assignment/demo project using the temporary AI API credentials provided for evaluation.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Email Management
 
-## Learn More
+- View emails in the inbox
+- Read emails and automatically mark them as read
+- Search emails
+- Star and unstar emails
+- View starred emails
+- Archive emails
+- View archived emails
+- Delete emails
+- Restore deleted emails
+- Permanently delete emails
+- View sent emails
+- Compose new emails
+- Save emails as drafts
+- Edit saved drafts
+- Delete drafts
+- Send emails
 
-To learn more about Next.js, take a look at the following resources:
+### AI Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- AI-powered email summarization
+- Summaries focus on:
+  - Main points
+  - Important dates
+  - Decisions
+  - Action items
+- AI-generated email replies
+- Multiple reply tones:
+  - Professional
+  - Friendly
+  - Concise
+- AI-generated replies are automatically placed into the compose window
+- Loading states for AI requests
+- Error handling for failed AI requests
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### UI / UX
 
-## Deploy on Vercel
+- Light mode
+- Dark mode
+- Responsive email layout
+- Animated inbox list
+- Interactive AI assistant card
+- Spotlight hover effect
+- Smooth email interactions
+- Unread email indicators
+- Attachment display
+- Modern sidebar navigation
+- Lucide icons
+- Empty states for folders
+- Hover and transition effects
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Tech Stack
+
+## Frontend
+
+- Next.js
+- React
+- JavaScript
+- CSS
+- Tailwind CSS utilities
+
+## AI
+
+- OpenAI-compatible Chat Completions API
+- `gpt-4o-mini`
+- Provided assignment AI API
+
+## UI and Animation
+
+- Motion
+- Lucide React
+- React Bits-inspired components
+
+---
+
+# Project Structure
+
+```text
+project/
+│
+├── .env
+├── package.json
+├── README.md
+│
+├── public/
+│
+└── src/
+    │
+    ├── app/
+    │   ├── page.js
+    │   ├── globals.css
+    │   │
+    │   └── api/
+    │       └── ai/
+    │           └── chat/
+    │               └── route.js
+    │
+    ├── components/
+    │   ├── Sidebar.jsx
+    │   ├── Inbox.jsx
+    │   ├── EmailViewer.jsx
+    │   ├── Compose.jsx
+    │   ├── AnimatedList.jsx
+    │   └── SpotlightCard.jsx
+    │
+    ├── data/
+    │   └── emails.js
+    │
+    └── lib/
+        └── ai.js

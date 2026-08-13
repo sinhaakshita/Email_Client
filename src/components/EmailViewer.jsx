@@ -1,19 +1,61 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Archive,
+  Paperclip,
+  Reply,
+  Star,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import { askAI } from "@/lib/ai";
+import SpotlightCard from "./SpotlightCard";
 
-export default function EmailViewer({ email, onBack }) {
-  const [summary, setSummary] = useState("");
-  const [loadingSummary, setLoadingSummary] = useState(false);
-  const [summaryError, setSummaryError] = useState("");
+export default function EmailViewer({
+  email,
+  activeFolder,
+  onBack,
+  onToggleStar,
+  onDelete,
+  onArchive,
+  onRestore,
+  onPermanentDelete,
+  onReply,
+  onAIReply,
+}) {
+  const [summary, setSummary] =
+    useState("");
+
+  const [loadingSummary, setLoadingSummary] =
+    useState(false);
+
+  const [summaryError, setSummaryError] =
+    useState("");
+
+  const [replyLoading, setReplyLoading] =
+    useState(false);
+
+  const [replyError, setReplyError] =
+    useState("");
 
   if (!email) {
     return (
-      <section className="flex flex-1 items-center justify-center">
-        <p className="text-gray-500">
-          Select an email to read
-        </p>
+      <section className="empty-state">
+        <div>
+          <div className="empty-state-icon">
+            ✉
+          </div>
+
+          <div className="empty-state-title">
+            Select an email to read
+          </div>
+
+          <div className="empty-state-description">
+            Choose an email from your inbox
+            to view its contents.
+          </div>
+        </div>
       </section>
     );
   }
@@ -45,135 +87,373 @@ ${email.body}`,
       setSummary(result);
     } catch (error) {
       console.error(error);
-      setSummaryError(error.message);
+
+      setSummaryError(
+        error?.message ||
+          "Unable to generate the summary."
+      );
     } finally {
       setLoadingSummary(false);
     }
   };
 
+  const generateReply = async (tone) => {
+    setReplyLoading(true);
+    setReplyError("");
+
+    try {
+      const result = await askAI([
+        {
+          role: "system",
+          content: `You are an AI email assistant.
+
+Write a reply to the email provided by the user.
+
+Tone: ${tone}
+
+Rules:
+- Write only the email body.
+- Do not include a subject.
+- Do not add explanations before or after the email.
+- Keep the reply natural and professional.
+- Address the important points from the original email.
+- Do not invent information that is not present in the original email.`,
+        },
+        {
+          role: "user",
+          content: `Write a ${tone.toLowerCase()} reply to this email.
+
+From: ${email.sender.name}
+Email: ${email.sender.email}
+Subject: ${email.subject}
+
+Original email:
+${email.body}`,
+        },
+      ]);
+
+      onAIReply({
+        to: email.sender.email,
+        subject: `Re: ${email.subject}`,
+        body: result,
+      });
+    } catch (error) {
+      console.error(error);
+
+      setReplyError(
+        error?.message ||
+          "Unable to generate a reply."
+      );
+    } finally {
+      setReplyLoading(false);
+    }
+  };
+
   return (
-    <section className="flex-1 overflow-y-auto p-8">
+    <section className="viewer">
       <button
         onClick={onBack}
-        className="mb-6 text-sm text-gray-500 transition hover:text-white"
+        className="back-button"
+        type="button"
       >
         ← Back to inbox
       </button>
 
       <div className="max-w-4xl">
-        {/* Email Header */}
-        <div className="mb-8 border-b border-gray-800 pb-6">
-          <h1 className="text-3xl font-semibold">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent:
+              "space-between",
+            gap: "20px",
+          }}
+        >
+          <h1 className="viewer-title">
             {email.subject}
           </h1>
 
-          <div className="mt-6 flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-800 font-semibold">
-              {email.sender.avatar}
-            </div>
-
-            <div>
-              <p className="font-medium">
-                {email.sender.name}
-              </p>
-
-              <p className="text-sm text-gray-500">
-                {email.sender.email}
-              </p>
-            </div>
-
-            <span className="ml-auto text-sm text-gray-500">
-              {email.timestamp}
-            </span>
-          </div>
-        </div>
-
-        {/* AI Summary */}
-        <div className="mb-8 rounded-xl border border-gray-800 bg-gray-950 p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">
-              ✨ AI Summary
-            </h2>
-
+          {activeFolder !== "Trash" && (
             <button
-              onClick={summarizeEmail}
-              disabled={loadingSummary}
-              className="rounded-lg border border-gray-700 px-4 py-2 text-sm transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+              onClick={() =>
+                onToggleStar(email)
+              }
+              aria-label={
+                email.starred
+                  ? "Unstar email"
+                  : "Star email"
+              }
+              className="viewer-star-button"
             >
-              {loadingSummary
-                ? "Summarizing..."
-                : summary
-                  ? "Regenerate"
-                  : "Summarize email"}
+              <Star
+                size={20}
+                strokeWidth={1.8}
+                fill={
+                  email.starred
+                    ? "currentColor"
+                    : "none"
+                }
+              />
             </button>
-          </div>
-
-          {summary && (
-            <div className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-300">
-              {summary}
-            </div>
-          )}
-
-          {summaryError && (
-            <p className="mt-4 text-sm text-red-400">
-              {summaryError}
-            </p>
-          )}
-
-          {!summary && !loadingSummary && !summaryError && (
-            <p className="mt-3 text-sm text-gray-500">
-              Get a quick summary of this email, including
-              important dates and action items.
-            </p>
           )}
         </div>
 
-        {/* Email Body */}
-        <div className="whitespace-pre-line leading-7 text-gray-300">
+        <div className="sender-row">
+          <div className="avatar">
+            {email.sender.avatar}
+          </div>
+
+          <div className="sender-details">
+            <p className="sender-name">
+              {email.sender.name}
+            </p>
+
+            <p className="sender-email">
+              {email.sender.email}
+            </p>
+          </div>
+
+          <span className="sender-time">
+            {email.timestamp}
+          </span>
+        </div>
+
+        {activeFolder !== "Trash" && (
+          <SpotlightCard className="ai-card">
+            <div className="ai-header">
+              <h2 className="ai-title">
+                ✨ AI Assistant
+              </h2>
+
+              <button
+                onClick={summarizeEmail}
+                disabled={loadingSummary}
+                className="ai-button"
+                type="button"
+              >
+                {loadingSummary
+                  ? "Summarizing..."
+                  : summary
+                    ? "Regenerate summary"
+                    : "Summarize"}
+              </button>
+            </div>
+
+            {summary && (
+              <div className="ai-summary">
+                {summary}
+              </div>
+            )}
+
+            {summaryError && (
+              <p
+                className="ai-summary"
+                style={{
+                  color:
+                    "var(--danger)",
+                }}
+              >
+                {summaryError}
+              </p>
+            )}
+
+            <div
+              style={{
+                marginTop: "18px",
+                paddingTop: "16px",
+                borderTop:
+                  "1px solid var(--border)",
+              }}
+            >
+              <p
+                style={{
+                  margin: "0 0 10px",
+                  color:
+                    "var(--text-secondary)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                }}
+              >
+                Draft a reply with AI
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                <button
+                  type="button"
+                  className="ai-button"
+                  disabled={replyLoading}
+                  onClick={() =>
+                    generateReply(
+                      "Professional"
+                    )
+                  }
+                >
+                  Professional
+                </button>
+
+                <button
+                  type="button"
+                  className="ai-button"
+                  disabled={replyLoading}
+                  onClick={() =>
+                    generateReply(
+                      "Friendly"
+                    )
+                  }
+                >
+                  Friendly
+                </button>
+
+                <button
+                  type="button"
+                  className="ai-button"
+                  disabled={replyLoading}
+                  onClick={() =>
+                    generateReply(
+                      "Concise"
+                    )
+                  }
+                >
+                  Concise
+                </button>
+              </div>
+
+              {replyLoading && (
+                <p className="ai-summary">
+                  Drafting your reply...
+                </p>
+              )}
+
+              {replyError && (
+                <p
+                  className="ai-summary"
+                  style={{
+                    color:
+                      "var(--danger)",
+                  }}
+                >
+                  {replyError}
+                </p>
+              )}
+            </div>
+          </SpotlightCard>
+        )}
+
+        <div className="email-body">
           {email.body}
         </div>
 
-        {/* Attachments */}
-        {email.attachments.length > 0 && (
+        {email.attachments?.length > 0 && (
           <div className="mt-10">
             <h3 className="mb-4 font-semibold">
               Attachments
             </h3>
 
             <div className="space-y-3">
-              {email.attachments.map((attachment) => (
-                <div
-                  key={attachment.name}
-                  className="flex items-center justify-between rounded-lg border border-gray-800 p-4"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {attachment.name}
-                    </p>
+              {email.attachments.map(
+                (attachment) => (
+                  <div
+                    key={attachment.name}
+                    className="attachment-card"
+                  >
+                    <div className="attachment-icon">
+                      <Paperclip size={18} />
+                    </div>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      {attachment.size}
-                    </p>
+                    <div>
+                      <p className="attachment-name">
+                        {attachment.name}
+                      </p>
+
+                      <p className="attachment-type">
+                        {attachment.size}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="action-button"
+                      style={{
+                        marginLeft: "auto",
+                      }}
+                    >
+                      Download
+                    </button>
                   </div>
-
-                  <button className="text-sm text-blue-400 transition hover:text-blue-300">
-                    Download
-                  </button>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="mt-10 flex gap-3">
-          <button className="rounded-lg border border-gray-700 px-5 py-2 transition hover:bg-gray-900">
-            Reply
-          </button>
+        <div className="email-actions">
+          {activeFolder === "Trash" ? (
+            <>
+              <button
+                type="button"
+                className="action-button primary"
+                onClick={() =>
+                  onRestore(email)
+                }
+              >
+                <Undo2 size={16} />
+                Restore
+              </button>
 
-          <button className="rounded-lg border border-gray-700 px-5 py-2 transition hover:bg-gray-900">
-            Forward
-          </button>
+              <button
+                type="button"
+                className="action-button danger-button"
+                onClick={() =>
+                  onPermanentDelete(
+                    email
+                  )
+                }
+              >
+                <Trash2 size={16} />
+                Delete permanently
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="action-button primary"
+                onClick={onReply}
+              >
+                <Reply size={16} />
+                Reply
+              </button>
+
+              <button
+                type="button"
+                className="action-button"
+                onClick={() =>
+                  onArchive(email)
+                }
+              >
+                <Archive size={16} />
+                Archive
+              </button>
+
+              <button
+                type="button"
+                className="action-button danger-button"
+                onClick={() =>
+                  onDelete(email)
+                }
+              >
+                <Trash2 size={16} />
+                Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
     </section>

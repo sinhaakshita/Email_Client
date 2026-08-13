@@ -28,8 +28,12 @@ Sarah`,
     timestamp: "10:42 AM",
     date: "Today",
 
-    read: false,
+    unread: true,
     starred: true,
+    trashed: false,
+    archived: false,
+    draft: false,
+    sent: false,
 
     attachments: [],
 
@@ -65,8 +69,12 @@ Michael`,
     timestamp: "9:18 AM",
     date: "Today",
 
-    read: true,
+    unread: false,
     starred: false,
+    trashed: false,
+    archived: false,
+    draft: false,
+    sent: false,
 
     attachments: [
       {
@@ -111,8 +119,12 @@ Emily`,
     timestamp: "Yesterday",
     date: "Yesterday",
 
-    read: true,
+    unread: false,
     starred: false,
+    trashed: false,
+    archived: false,
+    draft: false,
+    sent: false,
 
     attachments: [],
 
@@ -148,8 +160,12 @@ James`,
     timestamp: "Yesterday",
     date: "Yesterday",
 
-    read: false,
+    unread: true,
     starred: false,
+    trashed: false,
+    archived: false,
+    draft: false,
+    sent: false,
 
     attachments: [
       {

@@ -1,64 +1,205 @@
 "use client";
 
-import { emails } from "@/data/emails";
+import {
+  Paperclip,
+  Star,
+} from "lucide-react";
+import AnimatedList from "./AnimatedList";
 
-export default function Inbox({ onSelectEmail }) {
+export default function Inbox({
+  emails,
+  selectedEmail,
+  onSelectEmail,
+  onToggleStar,
+  activeFolder,
+}) {
+  const folderTitles = {
+    Inbox: "Inbox",
+    Starred: "Starred",
+    Sent: "Sent",
+    Drafts: "Drafts",
+    Archive: "Archive",
+    Trash: "Trash",
+  };
+
+  const title =
+    folderTitles[activeFolder] ||
+    "Inbox";
+
+  const unreadCount = emails.filter(
+    (email) => email.unread
+  ).length;
+
+  const handleStarClick = (
+    event,
+    email
+  ) => {
+    event.stopPropagation();
+    onToggleStar(email);
+  };
+
+  const renderEmail = (email) => {
+    const isSelected =
+      selectedEmail?.id === email.id;
+
+    return (
+      <div
+        onClick={() =>
+          onSelectEmail(email)
+        }
+        className={`email-card ${
+          email.unread ? "unread" : ""
+        } ${
+          isSelected ? "selected" : ""
+        }`}
+      >
+        <div className="email-card-top">
+          {email.unread && (
+            <span className="unread-dot" />
+          )}
+
+          <span className="email-sender">
+            {email.sender?.name ||
+              "Unknown sender"}
+          </span>
+
+          <span className="email-time">
+            {email.timestamp}
+          </span>
+
+          {activeFolder !== "Trash" && (
+            <button
+              type="button"
+              onClick={(event) =>
+                handleStarClick(
+                  event,
+                  email
+                )
+              }
+              aria-label={
+                email.starred
+                  ? "Unstar email"
+                  : "Star email"
+              }
+              className="star-button"
+            >
+              <Star
+                size={18}
+                strokeWidth={1.8}
+                fill={
+                  email.starred
+                    ? "currentColor"
+                    : "none"
+                }
+              />
+            </button>
+          )}
+        </div>
+
+        <div className="email-subject">
+          {email.subject}
+        </div>
+
+        <div className="email-preview">
+          {email.preview ||
+            email.body?.slice(0, 120)}
+        </div>
+
+        <div className="email-meta">
+          {email.attachments?.length >
+            0 && (
+            <span>
+              <Paperclip size={13} />
+              {email.attachments.length}
+            </span>
+          )}
+
+          {email.starred &&
+            activeFolder !== "Trash" && (
+              <span>Starred</span>
+            )}
+
+          {email.unread && (
+            <span>Unread</span>
+          )}
+
+          {email.draft && (
+            <span>Draft</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <section className="flex-1 overflow-y-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold">
-          Inbox
-        </h2>
+    <section className="inbox-panel">
+      <div className="inbox-header">
+        <h2>{title}</h2>
 
-        <p className="mt-1 text-sm text-gray-500">
-          {emails.length} messages
+        <p>
+          {emails.length}{" "}
+          {emails.length === 1
+            ? "message"
+            : "messages"}
+
+          {unreadCount > 0 && (
+            <>
+              {" · "}
+              <strong>
+                {unreadCount} unread
+              </strong>
+            </>
+          )}
         </p>
       </div>
 
-      {/* Email List */}
-      <div className="overflow-hidden rounded-xl border border-gray-800">
-        {emails.map((email) => (
-          <div
-            key={email.id}
-            onClick={() => onSelectEmail(email)}
-            className={`cursor-pointer border-b border-gray-800 p-5 transition last:border-b-0 hover:bg-gray-900 ${
-              !email.read ? "bg-gray-950" : ""
-            }`}
-          >
-            {/* Sender + Time */}
-            <div className="flex items-center justify-between">
-              <span
-                className={
-                  !email.read
-                    ? "font-semibold"
-                    : "font-normal"
-                }
-              >
-                {email.sender.name}
-              </span>
-
-              <span className="text-sm text-gray-500">
-                {email.timestamp}
-              </span>
+      {emails.length === 0 ? (
+        <div className="empty-state">
+          <div>
+            <div className="empty-state-icon">
+              {activeFolder === "Trash"
+                ? "⌫"
+                : activeFolder ===
+                    "Starred"
+                  ? "☆"
+                  : activeFolder ===
+                      "Archive"
+                    ? "▣"
+                    : activeFolder ===
+                        "Drafts"
+                      ? "▱"
+                      : "✉"}
             </div>
 
-            {/* Subject */}
-            <div
-              className={`mt-1 ${
-                !email.read ? "font-semibold" : ""
-              }`}
-            >
-              {email.subject}
+            <div className="empty-state-title">
+              No emails here
             </div>
 
-            {/* Preview */}
-            <p className="mt-1 truncate text-sm text-gray-500">
-              {email.preview}
-            </p>
+            <div className="empty-state-description">
+              {activeFolder ===
+              "Starred"
+                ? "Star an email to find it here."
+                : activeFolder ===
+                    "Trash"
+                  ? "Deleted emails will appear here."
+                  : activeFolder ===
+                      "Archive"
+                    ? "Archived emails will appear here."
+                    : activeFolder ===
+                        "Drafts"
+                      ? "Saved drafts will appear here."
+                      : "Your inbox is currently empty."}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="email-list">
+          <AnimatedList
+            items={emails}
+            renderItem={renderEmail}
+          />
+        </div>
+      )}
     </section>
   );
 }
